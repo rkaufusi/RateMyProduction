@@ -1,0 +1,6 @@
+@RateMyProduction.Api_HostAddress = http://localhost:5221
+
+GET {{RateMyProduction.Api_HostAddress}}/api/
+Accept: application/json
+
+###
