@@ -1,4 +1,11 @@
+using Microsoft.EntityFrameworkCore;
+using RateMyProduction.Core.Entities;
+using RateMyProduction.Infrastructure.Data;
+
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddDbContext<RateMyProductionContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("RateMyProductionDb")));
 
 // Add services to the container.
 builder.Services.AddControllers();
