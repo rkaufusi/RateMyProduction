@@ -20,5 +20,6 @@ public interface IRepository<T> where T : class
     void Delete(T entity);
 
     Task<bool> AnyAsync(Expression<Func<T, bool>> predicate);
+    Task<IReadOnlyList<T>> FindAllAsync(Expression<Func<T, bool>> predicate);
     Task<int> SaveChangesAsync();
 }

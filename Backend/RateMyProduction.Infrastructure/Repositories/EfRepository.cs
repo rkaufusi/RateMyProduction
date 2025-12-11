@@ -29,6 +29,9 @@ namespace RateMyProduction.Infrastructure.Repositories
         public async Task<T?> SingleOrDefaultAsync(Expression<Func<T, bool>> predicate)
             => await _context.Set<T>().SingleOrDefaultAsync(predicate);
 
+        public async Task<IReadOnlyList<T>> FindAllAsync(Expression<Func<T, bool>> predicate)
+            => await _context.Set<T>().Where(predicate).ToListAsync();
+
         public async Task AddAsync(T entity)
             => await _context.Set<T>().AddAsync(entity);
 

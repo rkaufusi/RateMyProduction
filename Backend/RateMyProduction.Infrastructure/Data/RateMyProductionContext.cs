@@ -25,40 +25,25 @@ public class RateMyProductionContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
-        // Users - Unique Email
         modelBuilder.Entity<User>()
-            .HasIndex(u => u.Email)
+            .HasIndex(u => u.Username)
             .IsUnique();
 
-        // RefreshToken indexes
         modelBuilder.Entity<RefreshToken>()
             .HasIndex(t => t.TokenHash);
 
         modelBuilder.Entity<RefreshToken>()
             .HasIndex(t => t.ExpiresAt);
 
-        // Productions indexes
         modelBuilder.Entity<Production>()
             .HasIndex(p => p.Title);
 
         modelBuilder.Entity<Production>()
             .HasIndex(p => p.Studio);
 
-        // Reviews - One review per user per production
-        modelBuilder.Entity<Review>()
-            .HasIndex(r => new { r.UserID, r.ProductionID })
-            .IsUnique();
-
-        // Reviews - Optimized query for latest reviews per production
         modelBuilder.Entity<Review>()
             .HasIndex(r => new { r.ProductionID, r.DatePosted });
 
-        // Tags - Unique name
-        modelBuilder.Entity<Tag>()
-            .HasIndex(t => t.TagName)
-            .IsUnique();
-
-        // ReviewTag - Composite primary key + relationships
         modelBuilder.Entity<ReviewTag>()
             .HasKey(rt => new { rt.ReviewID, rt.TagID });
 
@@ -73,6 +58,10 @@ public class RateMyProductionContext : DbContext
             .WithMany(t => t.ReviewTags)
             .HasForeignKey(rt => rt.TagID)
             .OnDelete(DeleteBehavior.NoAction);
+
+        // FIX FOR TRIGGER
+        modelBuilder.Entity<Review>()
+            .ToTable(tb => tb.UseSqlOutputClause(false));
     }
 
     public class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<RateMyProductionContext>
