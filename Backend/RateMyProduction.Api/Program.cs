@@ -6,6 +6,7 @@ using RateMyProduction.Core.Interfaces;
 using RateMyProduction.Core.Services;
 using RateMyProduction.Infrastructure.Data;
 using RateMyProduction.Infrastructure.Repositories;
+using NSwag;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,17 +17,27 @@ builder.Services.AddScoped(typeof(IRepository<>), typeof(EfRepository<>));
 
 builder.Services.AddScoped<IProductionService, ProductionService>();
 builder.Services.AddScoped<IReviewService, ReviewService>();
+builder.Services.AddScoped<IUserService, UserService>();
 
 // Add services to the container.
 builder.Services.AddControllers();
-builder.Services.AddOpenApi();
+builder.Services.AddOpenApiDocument(config =>
+{
+    config.Title = "RateMyProduction API";
+    config.Version = "v1";
+});
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    app.UseOpenApi();                    // serves JSON at /openapi/v1.json
+    app.UseSwaggerUi(config =>
+    {
+        config.Path = "/swagger";        // Swagger UI at /swagger
+        config.DocumentPath = "/swagger/v1/swagger.json";
+    });
 }
 
 app.UseHttpsRedirection();

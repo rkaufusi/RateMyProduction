@@ -1,106 +1,56 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
+﻿// RateMyProduction.Api/Controllers/UsersController.cs
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using RateMyProduction.Core.Entities;
-using RateMyProduction.Infrastructure.Data;
+using RateMyProduction.Core.Interfaces;
 
-namespace RateMyProduction.Api.Controllers
+namespace RateMyProduction.Api.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+public class UsersController : ControllerBase
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class UsersController : ControllerBase
+    private readonly IUserService _userService;
+
+    public UsersController(IUserService userService)
     {
-        private readonly RateMyProductionContext _context;
-
-        public UsersController(RateMyProductionContext context)
-        {
-            _context = context;
-        }
-
-        // GET: api/Users
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<User>>> GetUsers()
-        {
-            return await _context.Users.ToListAsync();
-        }
-
-        // GET: api/Users/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<User>> GetUser(int id)
-        {
-            var user = await _context.Users.FindAsync(id);
-
-            if (user == null)
-            {
-                return NotFound();
-            }
-
-            return user;
-        }
-
-        // PUT: api/Users/5
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutUser(int id, User user)
-        {
-            if (id != user.UserID)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(user).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!UserExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return NoContent();
-        }
-
-        // POST: api/Users
-        [HttpPost]
-        public async Task<ActionResult<User>> PostUser(User user)
-        {
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetUser", new { id = user.UserID }, user);
-        }
-
-        // DELETE: api/Users/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteUser(int id)
-        {
-            var user = await _context.Users.FindAsync(id);
-            if (user == null)
-            {
-                return NotFound();
-            }
-
-            _context.Users.Remove(user);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
-        }
-
-        private bool UserExists(int id)
-        {
-            return _context.Users.Any(e => e.UserID == id);
-        }
+        _userService = userService;
     }
+
+    [HttpGet]
+    public async Task<ActionResult<IReadOnlyList<UserDto>>> GetAll()
+        => Ok(await _userService.GetAllAsync());
+
+    [HttpGet("paged")]
+    public async Task<ActionResult<PagedResult<UserDto>>> GetPaged(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20)
+        => Ok(await _userService.GetPagedAsync(page, pageSize));
+
+    [HttpGet("{id:int}")]
+    public async Task<ActionResult<UserDto>> GetById(int id)
+    {
+        var user = await _userService.GetByIdAsync(id);
+        return user is null ? NotFound() : Ok(user);
+    }
+
+    [HttpGet("username/{username}")]
+    public async Task<ActionResult<UserDto>> GetByUsername(string username)
+    {
+        var user = await _userService.GetByUsernameAsync(username);
+        return user is null ? NotFound() : Ok(user);
+    }
+
+    [HttpGet("email/{email}")]
+    public async Task<ActionResult<UserDto>> GetByEmail(string email)
+    {
+        var user = await _userService.GetByEmailAsync(email);
+        return user is null ? NotFound() : Ok(user);
+    }
+
+    [HttpGet("exists/username/{username}")]
+    public async Task<ActionResult<bool>> UsernameExists(string username)
+        => Ok(await _userService.UsernameExistsAsync(username));
+
+    [HttpGet("exists/email/{email}")]
+    public async Task<ActionResult<bool>> EmailExists(string email)
+        => Ok(await _userService.EmailExistsAsync(email));
 }
