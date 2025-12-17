@@ -1,7 +1,8 @@
 ﻿// Api/Controllers/ReviewsController.cs
 using Microsoft.AspNetCore.Mvc;
 using RateMyProduction.Core.Interfaces;
-using RateMyProduction.Core.Services; // for DTOs (since they're in the interface file)
+using RateMyProduction.Core.DTOs.Responses;
+using RateMyProduction.Core.DTOs.Requests;
 
 namespace RateMyProduction.Api.Controllers;
 
@@ -10,7 +11,7 @@ namespace RateMyProduction.Api.Controllers;
 public class ReviewsController : ControllerBase
 {
     private readonly IReviewService _reviewService;
-    private readonly int _currentUserId = 1;
+    private readonly int _currentUserId = 1; // temp, update to get acctual user id
 
     public ReviewsController(IReviewService reviewService)
     {

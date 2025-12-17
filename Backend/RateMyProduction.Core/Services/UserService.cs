@@ -1,5 +1,6 @@
 ﻿using RateMyProduction.Core.Entities;
 using RateMyProduction.Core.Interfaces;
+using RateMyProduction.Core.DTOs.Responses;
 
 namespace RateMyProduction.Core.Services
 {
@@ -12,19 +13,19 @@ namespace RateMyProduction.Core.Services
             _userRepository = userRepository;
         }
 
-        public async Task<UserDto?> GetByIdAsync(int id)
+        public async Task<UserDTOs?> GetByIdAsync(int id)
         {
             var user = await _userRepository.GetByIdAsync(id);
             return user is null ? null : ToDto(user);
         }
 
-        public async Task<IReadOnlyList<UserDto>> GetAllAsync()
+        public async Task<IReadOnlyList<UserDTOs>> GetAllAsync()
         {
             var users = await _userRepository.ListAllAsync();
             return users.Select(ToDto).ToList();
         }
 
-        public async Task<PagedResult<UserDto>> GetPagedAsync(int page = 1, int pageSize = 20)
+        public async Task<PagedResult<UserDTOs>> GetPagedAsync(int page = 1, int pageSize = 20)
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
@@ -39,19 +40,19 @@ namespace RateMyProduction.Core.Services
                 .Select(ToDto)
                 .ToList();
 
-            return new PagedResult<UserDto>(pagedUsers, page, pageSize)
+            return new PagedResult<UserDTOs>(pagedUsers, page, pageSize)
             {
                 TotalCount = totalCount
             };
         }
 
-        public async Task<UserDto?> GetByUsernameAsync(string username)
+        public async Task<UserDTOs?> GetByUsernameAsync(string username)
         {
             var user = await _userRepository.FirstOrDefaultAsync(u => u.Username == username);
             return user is null ? null : ToDto(user);
         }
 
-        public async Task<UserDto?> GetByEmailAsync(string email)
+        public async Task<UserDTOs?> GetByEmailAsync(string email)
         {
             var user = await _userRepository.FirstOrDefaultAsync(u => u.Email == email);
             return user is null ? null : ToDto(user);
@@ -63,7 +64,7 @@ namespace RateMyProduction.Core.Services
         public async Task<bool> EmailExistsAsync(string email)
             => await _userRepository.AnyAsync(u => u.Email == email);
 
-        private static UserDto ToDto(User u) => new(
+        private static UserDTOs ToDto(User u) => new(
             u.UserID,
             u.Username,
             u.Email,

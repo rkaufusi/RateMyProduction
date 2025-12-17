@@ -32,10 +32,10 @@ var app = builder.Build();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.UseOpenApi();                    // serves JSON at /openapi/v1.json
+    app.UseOpenApi();
     app.UseSwaggerUi(config =>
     {
-        config.Path = "/swagger";        // Swagger UI at /swagger
+        config.Path = "/swagger";
         config.DocumentPath = "/swagger/v1/swagger.json";
     });
 }
@@ -45,10 +45,5 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
-
-if (app.Environment.IsDevelopment())
-{
-
-}
 
 app.Run();

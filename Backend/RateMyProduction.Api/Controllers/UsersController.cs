@@ -1,6 +1,7 @@
 ﻿// RateMyProduction.Api/Controllers/UsersController.cs
 using Microsoft.AspNetCore.Mvc;
 using RateMyProduction.Core.Interfaces;
+using RateMyProduction.Core.DTOs.Responses;
 
 namespace RateMyProduction.Api.Controllers;
 
@@ -16,31 +17,31 @@ public class UsersController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<IReadOnlyList<UserDto>>> GetAll()
+    public async Task<ActionResult<IReadOnlyList<UserDTOs>>> GetAll()
         => Ok(await _userService.GetAllAsync());
 
     [HttpGet("paged")]
-    public async Task<ActionResult<PagedResult<UserDto>>> GetPaged(
+    public async Task<ActionResult<PagedResult<UserDTOs>>> GetPaged(
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20)
         => Ok(await _userService.GetPagedAsync(page, pageSize));
 
     [HttpGet("{id:int}")]
-    public async Task<ActionResult<UserDto>> GetById(int id)
+    public async Task<ActionResult<UserDTOs>> GetById(int id)
     {
         var user = await _userService.GetByIdAsync(id);
         return user is null ? NotFound() : Ok(user);
     }
 
     [HttpGet("username/{username}")]
-    public async Task<ActionResult<UserDto>> GetByUsername(string username)
+    public async Task<ActionResult<UserDTOs>> GetByUsername(string username)
     {
         var user = await _userService.GetByUsernameAsync(username);
         return user is null ? NotFound() : Ok(user);
     }
 
     [HttpGet("email/{email}")]
-    public async Task<ActionResult<UserDto>> GetByEmail(string email)
+    public async Task<ActionResult<UserDTOs>> GetByEmail(string email)
     {
         var user = await _userService.GetByEmailAsync(email);
         return user is null ? NotFound() : Ok(user);

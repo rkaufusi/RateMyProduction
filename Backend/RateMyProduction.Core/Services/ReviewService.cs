@@ -1,6 +1,7 @@
-﻿// Core/Services/ReviewService.cs
-using RateMyProduction.Core.Entities;
+﻿using RateMyProduction.Core.Entities;
 using RateMyProduction.Core.Interfaces;
+using RateMyProduction.Core.DTOs.Responses;
+using RateMyProduction.Core.DTOs.Requests;
 
 namespace RateMyProduction.Core.Services
 {

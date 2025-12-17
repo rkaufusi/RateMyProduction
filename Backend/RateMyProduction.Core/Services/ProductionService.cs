@@ -1,5 +1,6 @@
 ﻿using RateMyProduction.Core.Entities;
 using RateMyProduction.Core.Interfaces;
+using RateMyProduction.Core.DTOs.Responses;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -15,19 +16,19 @@ namespace RateMyProduction.Core.Services
             _repository = repository;
         }
 
-        public async Task<ProductionDto?> GetByIdAsync(int id)
+        public async Task<ProductionDTOs?> GetByIdAsync(int id)
         {
             var production = await _repository.GetByIdAsync(id);
             return production is null ? null : ToDto(production);
         }
 
-        public async Task<IReadOnlyList<ProductionDto>> GetAllAsync()
+        public async Task<IReadOnlyList<ProductionDTOs>> GetAllAsync()
         {
             var productions = await _repository.ListAllAsync();
             return productions.Select(ToDto).ToList();
         }
 
-        public async Task<IReadOnlyList<ProductionDto>> GetTopRatedAsync(int count = 10)
+        public async Task<IReadOnlyList<ProductionDTOs>> GetTopRatedAsync(int count = 10)
         {
             var all = await _repository.ListAllAsync();
 
@@ -40,7 +41,7 @@ namespace RateMyProduction.Core.Services
                 .ToList();
         }
 
-        public async Task<PagedResult<ProductionDto>> GetPagedAsync(int page = 1, int pageSize = 20)
+        public async Task<PagedResult<ProductionDTOs>> GetPagedAsync(int page = 1, int pageSize = 20)
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
@@ -53,10 +54,10 @@ namespace RateMyProduction.Core.Services
                 .Select(ToDto)
                 .ToList();
 
-            return new PagedResult<ProductionDto>(result, page, pageSize);
+            return new PagedResult<ProductionDTOs>(result, page, pageSize);
         }
 
-        private static ProductionDto ToDto(Production p) => new(
+        private static ProductionDTOs ToDto(Production p) => new(
             p.ProductionID,
             p.Title,
             p.ProductionType,

@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Text;
 using RateMyProduction.Core.Entities;
+using RateMyProduction.Core.DTOs.Responses;
+using RateMyProduction.Core.DTOs.Requests;
 
 namespace RateMyProduction.Core.Interfaces
 {
@@ -14,33 +16,33 @@ namespace RateMyProduction.Core.Interfaces
         Task<bool> UserHasReviewedAsync(int userId, int productionId);
     }
 
-    // TODO: abstract to seperate file
-    public record CreateReviewRequest(
-        byte RatingOverall,
-        string? RoleWorked,
-        string ReviewText,
-        bool IsAnonymous = false);
+    //// TODO: abstract to seperate file
+    //public record CreateReviewRequest(
+    //    byte RatingOverall,
+    //    string? RoleWorked,
+    //    string ReviewText,
+    //    bool IsAnonymous = false);
 
-    public record UpdateReviewRequest(
-        byte RatingOverall,
-        string? RoleWorked,
-        string ReviewText,
-        bool IsAnonymous);
+    //public record UpdateReviewRequest(
+    //    byte RatingOverall,
+    //    string? RoleWorked,
+    //    string ReviewText,
+    //    bool IsAnonymous);
 
-    public record ReviewQueryParameters(
-        int Page = 1,
-        int PageSize = 20,
-        int? CurrentUserId = null);
+    //public record ReviewQueryParameters(
+    //    int Page = 1,
+    //    int PageSize = 20,
+    //    int? CurrentUserId = null);
 
-    public record ReviewDto(
-        int ReviewID,
-        int ProductionID,
-        string ProductionTitle,
-        byte RatingOverall,
-        string? RoleWorked,
-        string ReviewText,
-        string DisplayName,
-        DateTime DatePosted,
-        bool IsAnonymous,
-        bool IsOwnReview);
+    //public record ReviewDto(
+    //    int ReviewID,
+    //    int ProductionID,
+    //    string ProductionTitle,
+    //    byte RatingOverall,
+    //    string? RoleWorked,
+    //    string ReviewText,
+    //    string DisplayName,
+    //    DateTime DatePosted,
+    //    bool IsAnonymous,
+    //    bool IsOwnReview);
 }
