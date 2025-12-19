@@ -144,5 +144,20 @@ namespace RateMyProduction.Core.Services
             IsAnonymous: review.IsAnonymous,
             IsOwnReview: review.UserID == currentUserId
         );
+
+        public async Task<ReviewDto?> GetByIdAsync(int reviewId, int? currentUserId = null)
+        {
+            var review = await _reviewRepo.GetByIdAsync(reviewId);
+            if (review == null)
+                return null;
+
+            var production = await _prodRepo.GetByIdAsync(review.ProductionID);
+            if (production == null)
+                return null;
+
+            var user = await _userRepo.GetByIdAsync(review.UserID);
+
+            return ToDto(review, production, user, currentUserId ?? 0);
+        }
     }
 }

@@ -58,6 +58,11 @@ public class ReviewsController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<ReviewDto>> GetReview(int id)
     {
-        throw new NotImplementedException("Add GetById to service or load via production");
+        var review = await _reviewService.GetByIdAsync(id, _currentUserId);
+
+        if (review == null)
+            return NotFound();
+
+        return Ok(review);
     }
 }
