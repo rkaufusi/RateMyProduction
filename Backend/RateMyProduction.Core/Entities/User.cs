@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Identity;
 using System.Text;
 
 namespace RateMyProduction.Core.Entities
 {
-    public class User
+    public class User : IdentityUser<int>
     {
         [Key]
         public int UserID { get; set; }
