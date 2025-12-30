@@ -1,0 +1,11 @@
+ALTER TABLE [dbo].[Users] ADD NormalizedUserName NVARCHAR(256) NULL;
+ALTER TABLE [dbo].[Users] ADD NormalizedEmail NVARCHAR(256) NULL;
+ALTER TABLE [dbo].[Users] ADD EmailConfirmed BIT NOT NULL DEFAULT 0;
+ALTER TABLE [dbo].[Users] ADD PhoneNumber NVARCHAR(MAX) NULL;
+ALTER TABLE [dbo].[Users] ADD PhoneNumberConfirmed BIT NOT NULL DEFAULT 0;
+ALTER TABLE [dbo].[Users] ADD TwoFactorEnabled BIT NOT NULL DEFAULT 0;
+ALTER TABLE [dbo].[Users] ADD LockoutEnd DATETIMEOFFSET NULL;
+ALTER TABLE [dbo].[Users] ADD LockoutEnabled BIT NOT NULL DEFAULT 1;
+ALTER TABLE [dbo].[Users] ADD AccessFailedCount INT NOT NULL DEFAULT 0;
+ALTER TABLE [dbo].[Users] ADD ConcurrencyStamp NVARCHAR(MAX) NULL;
+ALTER TABLE [dbo].[Users] ADD SecurityStamp NVARCHAR(MAX) NULL;

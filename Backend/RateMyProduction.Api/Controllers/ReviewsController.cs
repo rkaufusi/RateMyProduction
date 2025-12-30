@@ -1,8 +1,10 @@
 ﻿// Api/Controllers/ReviewsController.cs
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using RateMyProduction.Core.Interfaces;
-using RateMyProduction.Core.DTOs.Responses;
 using RateMyProduction.Core.DTOs.Requests;
+using RateMyProduction.Core.DTOs.Responses;
+using RateMyProduction.Core.Interfaces;
+using System.Security.Claims;
 
 namespace RateMyProduction.Api.Controllers;
 
@@ -11,18 +13,20 @@ namespace RateMyProduction.Api.Controllers;
 public class ReviewsController : ControllerBase
 {
     private readonly IReviewService _reviewService;
-    private readonly int _currentUserId = 1; // temp, update to get acctual user id
 
     public ReviewsController(IReviewService reviewService)
     {
         _reviewService = reviewService;
     }
 
+    private int CurrentUserId => int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+        ?? throw new UnauthorizedAccessException("User not authenticated"));
+
     [HttpPost("production/{productionId}")]
     public async Task<ActionResult<ReviewDto>> CreateReview(int productionId, CreateReviewRequest request)
     {
         // TODO: get real userId from JWT later
-        var review = await _reviewService.CreateReviewAsync(_currentUserId, productionId, request);
+        var review = await _reviewService.CreateReviewAsync(CurrentUserId, productionId, request);
 
         return CreatedAtAction(
             nameof(GetReview),
@@ -33,14 +37,14 @@ public class ReviewsController : ControllerBase
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateReview(int id, UpdateReviewRequest request)
     {
-        await _reviewService.UpdateReviewAsync(_currentUserId, id, request);
+        await _reviewService.UpdateReviewAsync(CurrentUserId, id, request);
         return NoContent();
     }
 
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteReview(int id)
     {
-        await _reviewService.DeleteReviewAsync(_currentUserId, id);
+        await _reviewService.DeleteReviewAsync(CurrentUserId, id);
         return NoContent();
     }
 
@@ -50,7 +54,7 @@ public class ReviewsController : ControllerBase
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20)
     {
-        var parameters = new ReviewQueryParameters(page, pageSize, _currentUserId);
+        var parameters = new ReviewQueryParameters(page, pageSize, CurrentUserId);
         var result = await _reviewService.GetReviewsForProductionAsync(productionId, parameters);
         return Ok(result);
     }
@@ -58,7 +62,7 @@ public class ReviewsController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<ReviewDto>> GetReview(int id)
     {
-        var review = await _reviewService.GetByIdAsync(id, _currentUserId);
+        var review = await _reviewService.GetByIdAsync(id, CurrentUserId);
 
         if (review == null)
             return NotFound();

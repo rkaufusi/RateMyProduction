@@ -111,8 +111,8 @@ namespace RateMyProduction.Core.Services
             var userIdsNeeded = pageReviews.Select(r => r.UserID).Distinct().Distinct().ToList();
             var allUsers = await _userRepo.ListAllAsync();
             var userMap = allUsers
-                .Where(u => userIdsNeeded.Contains(u.UserID))
-                .ToDictionary(u => u.UserID);
+                .Where(u => userIdsNeeded.Contains(u.Id))
+                .ToDictionary(u => u.Id);
 
             // 5. Map to DTOs — now matches the updated ToDto signature
             var dtos = pageReviews.Select(r => ToDto(

@@ -1,4 +1,6 @@
 ﻿using Azure;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.EntityFrameworkCore.Infrastructure;
@@ -7,7 +9,7 @@ using RateMyProduction.Core.Entities;
 
 namespace RateMyProduction.Infrastructure.Data;
 
-public class RateMyProductionContext : DbContext
+public class RateMyProductionContext : IdentityDbContext<User, IdentityRole<int>, int> //DbContext
 {
     public RateMyProductionContext(DbContextOptions<RateMyProductionContext> options)
         : base(options)
@@ -26,7 +28,7 @@ public class RateMyProductionContext : DbContext
         base.OnModelCreating(modelBuilder);
 
         modelBuilder.Entity<User>()
-            .HasIndex(u => u.Username)
+            .HasIndex(u => u.UserName)
             .IsUnique();
 
         modelBuilder.Entity<RefreshToken>()
@@ -62,6 +64,36 @@ public class RateMyProductionContext : DbContext
         // FIX FOR TRIGGER
         modelBuilder.Entity<Review>()
             .ToTable(tb => tb.UseSqlOutputClause(false));
+
+        // removed to fix duplicates when inheritying from IdentityDbContext
+        //modelBuilder.Entity<User>(entity =>
+        //{
+        //    entity.ToTable("Users"); // Use your existing table name
+        //    entity.Property(u => u.Id).HasColumnName("UserID");
+        //    entity.Property(u => u.UserName).HasColumnName("Username");
+        //    // Add more mappings if needed (e.g., EmailConfirmed → IsEmailVerified)
+        //});
+
+        //modelBuilder.Entity<IdentityRole<int>>().ToTable("Roles");
+        // You can map other Identity tables if you want custom names
+
+        // Use your existing "Users" table for user data (instead of creating AspNetUsers)
+        modelBuilder.Entity<User>(entity =>
+        {
+            entity.ToTable("Users");
+            entity.Property(u => u.Id).HasColumnName("UserID"); // Map Id → UserID
+            entity.Property(u => u.UserName).HasColumnName("Username"); // Map UserName → Username
+            // Optional: map EmailConfirmed to your IsEmailVerified if you want
+            // entity.Property(u => u.EmailConfirmed).HasColumnName("IsEmailVerified");
+        });
+
+        // Map the other Identity tables to custom names (they will be created if they don't exist)
+        modelBuilder.Entity<IdentityRole<int>>().ToTable("Roles");
+        modelBuilder.Entity<IdentityUserRole<int>>().ToTable("UserRoles");
+        modelBuilder.Entity<IdentityUserClaim<int>>().ToTable("UserClaims");
+        modelBuilder.Entity<IdentityUserLogin<int>>().ToTable("UserLogins");
+        modelBuilder.Entity<IdentityUserToken<int>>().ToTable("UserTokens");
+        modelBuilder.Entity<IdentityRoleClaim<int>>().ToTable("RoleClaims");
     }
 
     public class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<RateMyProductionContext>

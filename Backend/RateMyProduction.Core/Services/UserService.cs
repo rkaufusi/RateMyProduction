@@ -48,7 +48,7 @@ namespace RateMyProduction.Core.Services
 
         public async Task<UserDTOs?> GetByUsernameAsync(string username)
         {
-            var user = await _userRepository.FirstOrDefaultAsync(u => u.Username == username);
+            var user = await _userRepository.FirstOrDefaultAsync(u => u.UserName == username);
             return user is null ? null : ToDto(user);
         }
 
@@ -59,14 +59,14 @@ namespace RateMyProduction.Core.Services
         }
 
         public async Task<bool> UsernameExistsAsync(string username)
-            => await _userRepository.AnyAsync(u => u.Username == username);
+            => await _userRepository.AnyAsync(u => u.UserName == username);
 
         public async Task<bool> EmailExistsAsync(string email)
             => await _userRepository.AnyAsync(u => u.Email == email);
 
         private static UserDTOs ToDto(User u) => new(
-            u.UserID,
-            u.Username,
+            u.Id,
+            u.UserName,
             u.Email,
             u.DisplayName,
             u.PrimaryRole,
