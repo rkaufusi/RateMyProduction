@@ -92,7 +92,20 @@ builder.Services.AddOpenApiDocument(config =>
         new NSwag.Generation.Processors.Security.OperationSecurityScopeProcessor("Bearer"));
 });
 
+builder.Services.AddProblemDetails();
+
 var app = builder.Build();
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseDeveloperExceptionPage();
+}
+else
+{
+    app.UseExceptionHandler();
+}
+
+app.UseStatusCodePages();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

@@ -81,7 +81,7 @@ public class AuthController : ControllerBase
             issuer: _configuration["Jwt:Issuer"],
             audience: _configuration["Jwt:Audience"],
             claims: claims,
-            expires: DateTime.UtcNow.AddDays(7), // Token valid for 7 days
+            expires: DateTime.UtcNow.AddDays(7),
             signingCredentials: creds);
 
         return new JwtSecurityTokenHandler().WriteToken(token);
