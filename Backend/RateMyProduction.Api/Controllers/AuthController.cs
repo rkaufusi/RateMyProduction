@@ -28,6 +28,9 @@ public class AuthController : ControllerBase
     [HttpPost("register")]
     public async Task<IActionResult> Register(RegisterRequest request)
     {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
         var user = new User
         {
             UserName = request.Username,
@@ -49,6 +52,9 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login(LoginRequest request)
     {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
         var user = await _userManager.FindByNameAsync(request.UsernameOrEmail)
                    ?? await _userManager.FindByEmailAsync(request.UsernameOrEmail);
 
