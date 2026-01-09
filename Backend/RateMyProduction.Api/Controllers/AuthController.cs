@@ -1,13 +1,14 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 //using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
+using RateMyProduction.Core.DTOs.Requests;
 using RateMyProduction.Core.Entities;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using RateMyProduction.Core.DTOs.Requests;
-using Microsoft.AspNetCore.Authorization;
 
 namespace RateMyProduction.Api.Controllers;
 
@@ -65,7 +66,78 @@ public class AuthController : ControllerBase
 
         var token = GenerateJwtToken(user);
 
-        return Ok(new { Token = token });
+        //return Ok(new { Token = token });
+        return Ok(new
+        {
+            Token = token,
+            User = new
+            {
+                user.Id,
+                user.UserName,
+                user.DisplayName,
+                user.Email,
+                user.IsEmailVerified
+            }
+        });
+    }
+
+    [AllowAnonymous]
+    [HttpGet("google")]
+    public IActionResult GoogleLogin()
+    {
+        var redirectUrl = Url.Action(nameof(GoogleCallback), "Auth", null, Request.Scheme);
+        var properties = new AuthenticationProperties { RedirectUri = redirectUrl };
+        return Challenge(properties, "Google");
+    }
+
+    [AllowAnonymous]
+    [HttpGet("google-callback")]
+    public async Task<IActionResult> GoogleCallback()
+    {
+        var authenticateResult = await HttpContext.AuthenticateAsync(IdentityConstants.ExternalScheme);
+
+        if (!authenticateResult.Succeeded)
+            return BadRequest(new { Message = "External authentication failed" });
+
+        var externalUser = authenticateResult.Principal;
+
+        var email = externalUser.FindFirst(ClaimTypes.Email)?.Value;
+        var name = externalUser.FindFirst(ClaimTypes.Name)?.Value;
+
+        if (email == null)
+            return BadRequest(new { Message = "Email not provided by Google" });
+
+        var user = await _userManager.FindByEmailAsync(email);
+
+        if (user == null)
+        {
+            user = new User
+            {
+                UserName = email,
+                Email = email,
+                DisplayName = name ?? email.Split('@')[0]
+            };
+
+            var createResult = await _userManager.CreateAsync(user);
+            if (!createResult.Succeeded)
+                return BadRequest(createResult.Errors);
+        }
+
+        var token = GenerateJwtToken(user);
+
+        //return Ok(new { Token = token });
+        return Ok(new
+        {
+            Token = token,
+            User = new
+            {
+                user.Id,
+                user.UserName,
+                user.DisplayName,
+                user.Email,
+                user.IsEmailVerified
+            }
+        });
     }
 
     private string GenerateJwtToken(User user)
@@ -75,7 +147,6 @@ public class AuthController : ControllerBase
             new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new Claim(ClaimTypes.Name, user.UserName!),
             new Claim(ClaimTypes.Email, user.Email!)
-            // Add more claims if needed (e.g., roles)
         };
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
