@@ -1,13 +1,16 @@
 ﻿using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
-//using Microsoft.AspNetCore.Identity.Data;
+using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using RateMyProduction.Core.DTOs.Requests;
 using RateMyProduction.Core.Entities;
+using RateMyProduction.Core.Interfaces;
+using RateMyProduction.Core.Services;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace RateMyProduction.Api.Controllers;
@@ -18,16 +21,21 @@ public class AuthController : ControllerBase
 {
     private readonly UserManager<User> _userManager;
     private readonly IConfiguration _configuration;
+    private readonly IAuthService _refreshTokenService;
 
-    public AuthController(UserManager<User> userManager, IConfiguration configuration)
+    public AuthController(
+        UserManager<User> userManager,
+        IConfiguration configuration,
+        IAuthService refreshTokenService)
     {
         _userManager = userManager;
         _configuration = configuration;
+        _refreshTokenService = refreshTokenService;
     }
 
     [AllowAnonymous]
     [HttpPost("register")]
-    public async Task<IActionResult> Register(RegisterRequest request)
+    public async Task<IActionResult> Register(RateMyProduction.Core.DTOs.Requests.RegisterRequest request)
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
@@ -51,7 +59,7 @@ public class AuthController : ControllerBase
 
     [AllowAnonymous]
     [HttpPost("login")]
-    public async Task<IActionResult> Login(LoginRequest request)
+    public async Task<IActionResult> Login(RateMyProduction.Core.DTOs.Requests.LoginRequest request)
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
@@ -64,12 +72,26 @@ public class AuthController : ControllerBase
             return Unauthorized(new { Message = "Invalid username/email or password" });
         }
 
-        var token = GenerateJwtToken(user);
+        var accessToken = GenerateJwtToken(user);
+        var refreshToken = GenerateRefreshTokenPlain();
+        var hashedRefreshToken = HashRefreshToken(refreshToken);
 
-        //return Ok(new { Token = token });
+        var refreshTokenEntity = new RefreshToken
+        {
+            UserID = user.Id,
+            TokenHash = hashedRefreshToken,
+            ExpiresAt = DateTime.UtcNow.AddDays(30),
+            CreatedAt = DateTime.UtcNow,
+            IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString(),
+            DeviceInfo = HttpContext.Request.Headers["User-Agent"].ToString()
+        };
+
+        await _refreshTokenService.SaveRefreshTokenAsync(refreshTokenEntity);  // ← Only service call
+
         return Ok(new
         {
-            Token = token,
+            AccessToken = accessToken,
+            RefreshToken = refreshToken,  // plain for client
             User = new
             {
                 user.Id,
@@ -123,12 +145,87 @@ public class AuthController : ControllerBase
                 return BadRequest(createResult.Errors);
         }
 
-        var token = GenerateJwtToken(user);
+        var accessToken = GenerateJwtToken(user);
+        var refreshToken = GenerateRefreshTokenPlain();
+        var hashedRefreshToken = HashRefreshToken(refreshToken);
 
-        //return Ok(new { Token = token });
+        var refreshTokenEntity = new RefreshToken
+        {
+            UserID = user.Id,
+            TokenHash = hashedRefreshToken,
+            ExpiresAt = DateTime.UtcNow.AddDays(30),
+            CreatedAt = DateTime.UtcNow,
+            IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString(),
+            DeviceInfo = HttpContext.Request.Headers["User-Agent"].ToString()
+        };
+
+        await _refreshTokenService.SaveRefreshTokenAsync(refreshTokenEntity);
+
         return Ok(new
         {
-            Token = token,
+            AccessToken = accessToken,
+            RefreshToken = refreshToken,
+            User = new
+            {
+                user.Id,
+                user.UserName,
+                user.DisplayName,
+                user.Email,
+                user.IsEmailVerified
+            }
+        });
+    }
+
+    [AllowAnonymous]
+    [HttpPost("refresh")]
+    public async Task<IActionResult> Refresh(RefreshRequest request)
+    {
+        if (string.IsNullOrEmpty(request.RefreshToken))
+            return BadRequest(new { Message = "Refresh token required" });
+
+        using var sha256 = SHA256.Create();
+        var hashBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(request.RefreshToken));
+        var incomingHash = Convert.ToBase64String(hashBytes);
+
+        var storedToken = await _refreshTokenService.GetRefreshTokenByHashAsync(incomingHash);
+
+        if (storedToken == null)
+            return Unauthorized(new { Message = "Invalid refresh token" });
+
+        if (storedToken.RevokedAt != null)
+            return Unauthorized(new { Message = "Refresh token revoked" });
+
+        if (storedToken.ExpiresAt < DateTime.UtcNow)
+            return Unauthorized(new { Message = "Refresh token expired" });
+
+        var user = await _userManager.FindByIdAsync(storedToken.UserID.ToString());
+        if (user == null)
+            return Unauthorized(new { Message = "User not found" });
+
+        storedToken.RevokedAt = DateTime.UtcNow;
+
+        var newAccessToken = GenerateJwtToken(user);
+
+        var newRefreshToken = GenerateRefreshTokenPlain();
+        var newHashedRefreshToken = HashRefreshToken(newRefreshToken);
+
+        var newRefreshTokenEntity = new RefreshToken
+        {
+            UserID = user.Id,
+            TokenHash = newHashedRefreshToken,
+            ExpiresAt = DateTime.UtcNow.AddDays(30),
+            CreatedAt = DateTime.UtcNow,
+            IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString(),
+            DeviceInfo = HttpContext.Request.Headers["User-Agent"].ToString(),
+            ReplacedByTokenID = storedToken.TokenID
+        };
+
+        await _refreshTokenService.SaveRefreshTokenAsync(newRefreshTokenEntity);
+
+        return Ok(new
+        {
+            AccessToken = newAccessToken,
+            RefreshToken = newRefreshToken,
             User = new
             {
                 user.Id,
@@ -149,9 +246,7 @@ public class AuthController : ControllerBase
             new Claim(ClaimTypes.Email, user.Email!)
         };
 
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
-            _configuration["Jwt:Key"]!));
-
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]!));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
         var token = new JwtSecurityToken(
@@ -162,5 +257,19 @@ public class AuthController : ControllerBase
             signingCredentials: creds);
 
         return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
+    private string GenerateRefreshTokenPlain()
+    {
+        var bytes = RandomNumberGenerator.GetBytes(32);
+        return Convert.ToBase64String(bytes);
+    }
+
+    private string HashRefreshToken(string plainToken)
+    {
+        using var sha256 = SHA256.Create();
+        var bytes = Encoding.UTF8.GetBytes(plainToken);
+        var hash = sha256.ComputeHash(bytes);
+        return Convert.ToBase64String(hash);
     }
 }

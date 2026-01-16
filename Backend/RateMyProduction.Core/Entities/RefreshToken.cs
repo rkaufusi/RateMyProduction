@@ -12,16 +12,12 @@ namespace RateMyProduction.Core.Entities
 
         public int UserID { get; set; }
 
-        [Required, MaxLength(255)]
         public string TokenHash { get; set; } = string.Empty;
 
-        [Required, MaxLength(100)]
         public string JwtId { get; set; } = string.Empty;
 
-        [MaxLength(255)]
         public string? DeviceInfo { get; set; }
 
-        [MaxLength(45)]
         public string? IpAddress { get; set; }
 
         public DateTime ExpiresAt { get; set; }
@@ -31,7 +27,6 @@ namespace RateMyProduction.Core.Entities
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-        // Navigation
         public virtual User User { get; set; } = null!;
     }
 }

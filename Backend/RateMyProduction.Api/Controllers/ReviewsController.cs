@@ -25,7 +25,9 @@ public class ReviewsController : ControllerBase
     [HttpPost("production/{productionId}")]
     public async Task<ActionResult<ReviewDto>> CreateReview(int productionId, CreateReviewRequest request)
     {
-        // TODO: get real userId from JWT later
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
         var review = await _reviewService.CreateReviewAsync(CurrentUserId, productionId, request);
 
         return CreatedAtAction(
@@ -37,6 +39,9 @@ public class ReviewsController : ControllerBase
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateReview(int id, UpdateReviewRequest request)
     {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
         await _reviewService.UpdateReviewAsync(CurrentUserId, id, request);
         return NoContent();
     }
@@ -44,6 +49,9 @@ public class ReviewsController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteReview(int id)
     {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
         await _reviewService.DeleteReviewAsync(CurrentUserId, id);
         return NoContent();
     }
