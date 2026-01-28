@@ -1,0 +1,83 @@
+﻿@page "/"
+@inject HttpClient Http
+
+<PageTitle>Rate My Production | Search</PageTitle>
+
+<div class="container mt-5">
+    <div class="text-center mb-5">
+        <h1 class="display-4 fw-bold">Rate My Production</h1>
+        <p class="lead">Check the "vibe" before you sign the contract.</p>
+    </div>
+
+    <div class="row justify-content-center mb-5">
+        <div class="col-md-8">
+            <div class="input-group input-group-lg shadow-sm">
+                <input type="text" class="form-control" 
+                       placeholder="Search by Show, Movie, or Studio..." 
+                       @bind="searchQuery" @bind:event="oninput" />
+                <button class="btn btn-primary" @onclick="SearchProductions">
+                    <i class="bi bi-search"></i> Search
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        @if (productions == null)
+        {
+            <div class="text-center">
+                <p>Enter a production name to start...</p>
+            </div>
+        }
+        else if (productions.Count == 0)
+        {
+            <div class="alert alert-info">No productions found matching that name.</div>
+        }
+        else
+        {
+            @foreach (var prod in productions)
+            {
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100 shadow-sm border-0">
+                        <div class="card-body">
+                            <h5 class="card-title fw-bold">@prod.Name</h5>
+                            <h6 class="card-subtitle mb-2 text-muted">@prod.Studio</h6>
+                            <div class="d-flex align-items-center mt-3">
+                                <span class="badge bg-warning text-dark me-2">
+                                   ⭐ @prod.AverageRating.ToString("0.0")
+                                </span>
+                                <small class="text-muted">(@prod.ReviewCount reviews)</small>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-transparent border-0 pb-3">
+                            <a href="/production/@prod.Id" class="btn btn-outline-primary btn-sm w-100">View Production</a>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+</div>
+
+@code {
+    private string searchQuery = "";
+    private List<ProductionSummary>? productions;
+
+    public class ProductionSummary {
+        public int Id { get; set; }
+        public string Name { get; set; } = "";
+        public string Studio { get; set; } = "";
+        public double AverageRating { get; set; }
+        public int ReviewCount { get; set; }
+    }
+
+    private async Task SearchProductions()
+    {    
+        // Mock data
+        productions = new List<ProductionSummary> {
+            new() { Id = 1, Name = "House of the Dragon", Studio = "HBO", AverageRating = 4.2, ReviewCount = 156 },
+            new() { Id = 2, Name = "The Bear", Studio = "FX", AverageRating = 4.8, ReviewCount = 89 },
+            new() { Id = 3, Name = "How I met your mother", Studio = "CBS", AverageRating = 1.5, ReviewCount = 12 }
+        };
+    }
+}
