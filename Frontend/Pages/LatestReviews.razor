@@ -1,0 +1,152 @@
+﻿@page "/latest"
+
+<PageTitle>Latest Intel | Rate My Production</PageTitle>
+
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-end mb-4">
+        <div>
+            <h1 class="fw-bold mb-0">Latest Intel</h1>
+            <p class="text-muted mb-0">Real-time feedback from sets across the globe.</p>
+        </div>
+        <div class="d-none d-md-block">
+            <button class="btn btn-outline-primary btn-sm">
+                <i class="bi bi-filter"></i> Filter Feed
+            </button>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            @if (recentReviews == null || !recentReviews.Any())
+            {
+                <div class="text-center p-5 border rounded bg-light">
+                    <p class="text-muted">No intel has been reported yet today...</p>
+                </div>
+            }
+            else
+            {
+                @foreach (var review in recentReviews)
+                {
+                    <div class="card shadow-sm border-0 mb-4">
+                        <div class="card-body p-4">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div>
+                                    <h5 class="fw-bold mb-0">@review.ProductionName</h5>
+                                    <span class="text-muted small">@review.Studio • @review.Location</span>
+                                </div>
+                                <div class="text-warning">
+                                    @for (int i = 0; i < 5; i++)
+                                    {
+                                        <i class="bi @(i < review.Rating ? "bi-star-fill" : "bi-star")"></i>
+                                    }
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                @if (!string.IsNullOrEmpty(review.Department))
+                                {
+                                    <span class="badge bg-info-subtle text-info border border-info-subtle px-2 py-1">
+                                        <i class="bi bi-tag-fill me-1"></i> @review.Department
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle px-2 py-1">
+                                        <i class="bi bi-shield-check me-1"></i> Verified Crew (Anonymous)
+                                    </span>
+                                }
+                            </div>
+
+                            <p class="text-dark mb-3" style="line-height: 1.6; font-style: italic;">
+                                "@review.Comment"
+                            </p>
+
+                            <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+                                <small class="text-muted">
+                                    <i class="bi bi-clock-history"></i> @review.TimeAgo
+                                </small>
+                                <a href="/production/@review.Slug" class="btn btn-link btn-sm text-decoration-none p-0">
+                                    Full Intel <i class="bi bi-chevron-right"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm bg-dark text-white p-4 mb-4">
+                <h5 class="fw-bold mb-3">Industry Pulse</h5>
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="small">Active Productions</span>
+                    <span class="fw-bold text-primary">142</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="small">New Reviews (24h)</span>
+                    <span class="fw-bold text-success">28</span>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm p-4">
+                <h5 class="fw-bold mb-3 text-uppercase small text-muted">Trending Discussions</h5>
+                <div class="list-group list-group-flush">
+                    <a href="/production/the-bear" class="list-group-item list-group-item-action px-0 border-0 d-flex justify-content-between align-items-center">
+                        <span>#TheBear</span>
+                        <span class="badge rounded-pill bg-light text-dark border">Hot</span>
+                    </a>
+                    <a href="/production/house-of-the-dragon" class="list-group-item list-group-item-action px-0 border-0">#HouseOfTheDragon</a>
+                    <a href="/production/gladiator-ii" class="list-group-item list-group-item-action px-0 border-0">#GladiatorII</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<RecentReviewDto> recentReviews = new()
+    {
+        new() {
+            ProductionName = "The Bear",
+            Slug = "the-bear",
+            Studio = "FX",
+            Location = "Chicago",
+            Department = "Technical Crew",
+            Rating = 5,
+            TimeAgo = "2 hours ago",
+            Comment = "Schedule is tight but the ADs are respectful. Catering is top tier."
+        },
+        new() {
+            ProductionName = "Untitled Superhero Movie",
+            Slug = "untitled-hero",
+            Studio = "Marvel",
+            Location = "Atlanta",
+            Department = "",
+            Rating = 2,
+            TimeAgo = "5 hours ago",
+            Comment = "Night shoots were a mess. Frantic environment and safety felt like an afterthought."
+        },
+        new() {
+            ProductionName = "House of the Dragon",
+            Slug = "house-of-the-dragon",
+            Studio = "HBO",
+            Location = "UK",
+            Department = "Art & Creative",
+            Rating = 4,
+            TimeAgo = "1 day ago",
+            Comment = "Long commute to the stages but the build quality is incredible. Great HODs."
+        }
+    };
+
+    public class RecentReviewDto
+    {
+        public string ProductionName { get; set; } = "";
+        public string Slug { get; set; } = "";
+        public string Studio { get; set; } = "";
+        public string Location { get; set; } = "";
+        public string Department { get; set; } = "";
+        public int Rating { get; set; }
+        public string TimeAgo { get; set; } = "";
+        public string Comment { get; set; } = "";
+    }
+}

@@ -1,0 +1,136 @@
+﻿@page "/production/{Slug}"
+@inject HttpClient Http
+@inject NavigationManager Nav
+
+<PageTitle>Set Intel | @(production?.Name ?? "Loading...")</PageTitle>
+
+<div class="container mt-4">
+    @if (production == null)
+    {
+        <div class="text-center mt-5">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="mt-2 text-muted">Scanning the call sheets for "@Slug"...</p>
+        </div>
+    }
+    else
+    {
+        <button class="btn btn-link text-decoration-none p-0 mb-3" @onclick='() => Nav.NavigateTo("/")'>
+            <i class="bi bi-arrow-left"></i> Back to Search
+        </button>
+
+        <div class="card shadow border-0 mb-4 overflow-hidden">
+            <div class="card-header bg-dark text-white p-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="display-5 fw-bold mb-0">@production.Name</h1>
+                        <span class="badge bg-primary mt-2">@production.Studio</span>
+                    </div>
+                    <div class="text-center bg-white text-dark rounded p-2 shadow-sm">
+                        <div class="h2 mb-0 text-warning">⭐ @production.AverageRating.ToString("0.0")</div>
+                        <small class="text-uppercase fw-bold" style="font-size: 0.6rem;">Overall Score</small>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body bg-light border-bottom">
+                <div class="row text-center">
+                    <div class="col border-end">
+                        <small class="text-muted d-block text-uppercase small">Safety</small>
+                        <span class="fw-bold">4.8/5</span>
+                    </div>
+                    <div class="col border-end">
+                        <small class="text-muted d-block text-uppercase small">Catering</small>
+                        <span class="fw-bold">3.5/5</span>
+                    </div>
+                    <div class="col">
+                        <small class="text-muted d-block text-uppercase small">Reviews</small>
+                        <span class="fw-bold">@production.ReviewCount</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-5">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3 class="fw-bold mb-0">Crew Reviews</h3>
+                <AuthorizeView>
+                    <Authorized>
+                        <button class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-pencil-square"></i> Write Review
+                        </button>
+                    </Authorized>
+                </AuthorizeView>
+            </div>
+
+            <AuthorizeView>
+                <Authorized>
+                    <div class="list-group shadow-sm">
+                        <div class="list-group-item p-4">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="badge bg-info text-dark">Camera Dept</span>
+                                <small class="text-muted">Oct 2025</small>
+                            </div>
+                            <p class="mb-0 italic">"Great crew, but the location move was a nightmare. Production didn't provide enough shuttles."</p>
+                        </div>
+                    </div>
+                </Authorized>
+                <NotAuthorized>
+                    <div class="card border-0 shadow-sm p-5 text-center bg-white">
+                        <div class="mb-3">
+                            <i class="bi bi-shield-lock text-primary" style="font-size: 3.5rem;"></i>
+                        </div>
+                        <h4 class="fw-bold">Member-Only Access</h4>
+                        <p class="text-muted mx-auto mb-4" style="max-width: 450px;">
+                            Detailed crew feedback, department-specific ratings, and "Red Flags" are only visible to verified industry professionals.
+                        </p>
+                        <div class="d-grid gap-2 d-md-block">
+                            <a href="login" class="btn btn-primary px-5 py-2 me-md-2">Login</a>
+                            <a href="register" class="btn btn-outline-dark px-5 py-2">Create Account</a>
+                        </div>
+                    </div>
+                </NotAuthorized>
+            </AuthorizeView>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public string Slug { get; set; } = "";
+    private ProductionDetailDto? production;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Task.Delay(600);
+
+        // TODO: remove and get actual data
+        var mockProductions = new List<ProductionDetailDto>
+        {
+            new() { Name = "House of the Dragon", Studio = "HBO", AverageRating = 4.2, ReviewCount = 156 },
+            new() { Name = "The Bear", Studio = "FX", AverageRating = 4.8, ReviewCount = 89 },
+            new() { Name = "How I met your mother", Studio = "CBS", AverageRating = 3.8, ReviewCount = 12 }
+        };
+
+        // TODO: replace with api call
+        production = mockProductions.FirstOrDefault(p => GenerateSlug(p.Name) == Slug.ToLower());
+
+        if (production == null)
+        {
+            Nav.NavigateTo("/not-found");
+        }
+    }
+
+    private string GenerateSlug(string phrase) 
+    {
+        return phrase.ToLower()
+                     .Replace(" ", "-")
+                     .Replace("'", "")
+                     .Trim();
+    }
+
+    public class ProductionDetailDto 
+    {
+        public string Name { get; set; } = "";
+        public string Studio { get; set; } = "";
+        public double AverageRating { get; set; }
+        public int ReviewCount { get; set; }
+    }
+}

@@ -1,0 +1,99 @@
+﻿@page "/profile"
+
+<PageTitle>My Profile | Rate My Production</PageTitle>
+
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-lg-4 mb-4">
+            <div class="card border-0 shadow-sm overflow-hidden">
+                <div class="card-header bg-primary py-4"></div>
+                <div class="card-body text-center pt-0" style="margin-top: -40px;">
+                    <div class="mb-3">
+                        <div class="rounded-circle bg-white shadow-sm d-inline-block p-1">
+                            <div class="rounded-circle bg-light d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                                <i class="bi bi-person-fill text-secondary fs-1"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <h4 class="fw-bold mb-1">Member #8421</h4>
+                    <p class="text-muted small mb-3">Verified Industry Professional</p>
+
+                    <div class="row g-0 border-top border-bottom py-3 mb-4">
+                        <div class="col-6 border-end">
+                            <div class="h5 fw-bold mb-0">12</div>
+                            <small class="text-muted text-uppercase" style="font-size: 0.7rem;">Reviews</small>
+                        </div>
+                        <div class="col-6">
+                            <div class="h5 fw-bold mb-0">45</div>
+                            <small class="text-muted text-uppercase" style="font-size: 0.7rem;">Upvotes</small>
+                        </div>
+                    </div>
+
+                    <div class="text-start">
+                        <label class="fw-bold small text-uppercase mb-2 text-muted">Identity Shield</label>
+                        <select class="form-select form-select-sm mb-4">
+                            <option>Technical Crew</option>
+                            <option>Art & Creative</option>
+                            <option>Logistics & Transport</option>
+                        </select>
+
+                        <button class="btn btn-outline-danger btn-sm w-100">
+                            <i class="bi bi-box-arrow-right"></i> Log Out
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-8">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3 class="fw-bold mb-0">My Review History</h3>
+                <span class="text-muted small">Total: 12 reports</span>
+            </div>
+
+            <div class="card border-0 shadow-sm">
+                <div class="list-group list-group-flush">
+                    @foreach (var myReview in userReviews)
+                    {
+                        <div class="list-group-item p-4">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <h6 class="fw-bold mb-0 text-primary">@myReview.Production</h6>
+                                    <small class="text-muted">@myReview.Date</small>
+                                </div>
+                                <div class="text-warning small">
+                                    @for (int i = 0; i < 5; i++)
+                                    {
+                                        <i class="bi @(i < myReview.Rating ? "bi-star-fill" : "bi-star")"></i>
+                                    }
+                                </div>
+                            </div>
+                            <p class="text-dark mb-3">"@myReview.Snippet"</p>
+                            <div class="d-flex gap-3">
+                                <button class="btn btn-link btn-sm p-0 text-decoration-none"><i class="bi bi-pencil"></i> Edit</button>
+                                <button class="btn btn-link btn-sm p-0 text-decoration-none text-danger"><i class="bi bi-trash"></i> Delete</button>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<UserReview> userReviews = new()
+    {
+        new() { Production = "The Bear", Rating = 5, Date = "Dec 2025", Snippet = "Great crew, catering was the best I've ever had on an FX show." },
+        new() { Production = "Untitled Hero Movie", Rating = 2, Date = "Oct 2025", Snippet = "Turnaround violations were constant. Proceed with caution." },
+        new() { Production = "House of the Dragon", Rating = 4, Date = "Aug 2025", Snippet = "Strong HODs, very professional environment." }
+    };
+
+    public class UserReview
+    {
+        public string Production { get; set; } = "";
+        public int Rating { get; set; }
+        public string Date { get; set; } = "";
+        public string Snippet { get; set; } = "";
+    }
+}

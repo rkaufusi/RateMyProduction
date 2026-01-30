@@ -50,7 +50,7 @@
                             </div>
                         </div>
                         <div class="card-footer bg-transparent border-0 pb-3">
-                            <a href="/production/@prod.Id" class="btn btn-outline-primary btn-sm w-100">View Production</a>
+                            <a href="/production/@GenerateSlug(prod.Name)" class="btn btn-outline-primary btn-sm w-100">View Production</a>
                         </div>
                     </div>
                 </div>
@@ -77,7 +77,14 @@
         productions = new List<ProductionSummary> {
             new() { Id = 1, Name = "House of the Dragon", Studio = "HBO", AverageRating = 4.2, ReviewCount = 156 },
             new() { Id = 2, Name = "The Bear", Studio = "FX", AverageRating = 4.8, ReviewCount = 89 },
-            new() { Id = 3, Name = "How I met your mother", Studio = "CBS", AverageRating = 1.5, ReviewCount = 12 }
+            new() { Id = 3, Name = "How I met your mother", Studio = "CBS", AverageRating = 3.8, ReviewCount = 12 }
         };
+    }
+    private string GenerateSlug(string phrase)
+    {
+        return phrase.ToLower()
+                     .Replace(" ", "-")
+                     .Replace("'", "")
+                     .Trim();
     }
 }
