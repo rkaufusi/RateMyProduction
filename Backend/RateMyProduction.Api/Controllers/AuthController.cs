@@ -86,12 +86,12 @@ public class AuthController : ControllerBase
             DeviceInfo = HttpContext.Request.Headers["User-Agent"].ToString()
         };
 
-        await _refreshTokenService.SaveRefreshTokenAsync(refreshTokenEntity);  // ← Only service call
+        await _refreshTokenService.SaveRefreshTokenAsync(refreshTokenEntity);
 
         return Ok(new
         {
             AccessToken = accessToken,
-            RefreshToken = refreshToken,  // plain for client
+            RefreshToken = refreshToken,
             User = new
             {
                 user.Id,
@@ -114,7 +114,7 @@ public class AuthController : ControllerBase
 
     [AllowAnonymous]
     [HttpGet("google-callback")]
-    public async Task<IActionResult> GoogleCallback()
+    public async Task<IActionResult> GoogleCallback([FromServices] TokenStoreService tokenStoreService)
     {
         var authenticateResult = await HttpContext.AuthenticateAsync(IdentityConstants.ExternalScheme);
 
@@ -122,7 +122,6 @@ public class AuthController : ControllerBase
             return BadRequest(new { Message = "External authentication failed" });
 
         var externalUser = authenticateResult.Principal;
-
         var email = externalUser.FindFirst(ClaimTypes.Email)?.Value;
         var name = externalUser.FindFirst(ClaimTypes.Name)?.Value;
 
@@ -161,19 +160,11 @@ public class AuthController : ControllerBase
 
         await _refreshTokenService.SaveRefreshTokenAsync(refreshTokenEntity);
 
-        return Ok(new
-        {
-            AccessToken = accessToken,
-            RefreshToken = refreshToken,
-            User = new
-            {
-                user.Id,
-                user.UserName,
-                user.DisplayName,
-                user.Email,
-                user.IsEmailVerified
-            }
-        });
+        var tokenId = tokenStoreService.StoreTokens(accessToken, refreshToken, user.UserName!);
+
+        var clientUrl = "https://localhost:7273";
+
+        return Redirect($"{clientUrl}/signin-callback?tokenId={tokenId}");
     }
 
     [AllowAnonymous]
@@ -234,6 +225,26 @@ public class AuthController : ControllerBase
                 user.Email,
                 user.IsEmailVerified
             }
+        });
+    }
+
+    [AllowAnonymous]
+    [HttpPost("exchange-token")]
+    public async Task<IActionResult> ExchangeToken([FromBody] ExchangeTokenRequest request, [FromServices] TokenStoreService tokenStoreService)
+    {
+
+        var tokenData = tokenStoreService.GetAndInvalidateToken(request.TokenId);
+
+        if (tokenData == null)
+        {
+            return Unauthorized(new { Message = "Token ID is invalid or has already been used." });
+        }
+
+        return Ok(new
+        {
+            AccessToken = tokenData.AccessToken,
+            RefreshToken = tokenData.RefreshToken,
+            Username = tokenData.Username
         });
     }
 

@@ -14,6 +14,7 @@ using RateMyProduction.Core.Services;
 using RateMyProduction.Infrastructure.Data;
 using RateMyProduction.Infrastructure.Repositories;
 using System.Text;
+using RateMyProduction.Api;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,6 +27,8 @@ builder.Services.AddScoped<IProductionService, ProductionService>();
 builder.Services.AddScoped<IReviewService, ReviewService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddMemoryCache();
+builder.Services.AddSingleton<TokenStoreService>();
 
 // Add ASP.NET Core Identity
 builder.Services.AddIdentity<User, IdentityRole<int>>(options =>
@@ -100,6 +103,16 @@ builder.Services.AddOpenApiDocument(config =>
         new NSwag.Generation.Processors.Security.OperationSecurityScopeProcessor("Bearer"));
 });
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("BlazorPolicy", policy =>
+    {
+        policy.WithOrigins("https://localhost:7273")
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
+
 builder.Services.AddProblemDetails();
 
 var app = builder.Build();
@@ -127,6 +140,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseCors("BlazorPolicy");
 
 app.UseAuthentication();
 
