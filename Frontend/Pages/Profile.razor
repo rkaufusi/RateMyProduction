@@ -2,10 +2,11 @@
 @using RateMyProduction.Frontend.Services
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Authorization
+@using System.Net.Http.Json
 
 @attribute [Authorize]
 @inject ILocalStorageService Storage
-@inject AuthenticationStateProvider AuthProvider
+@inject HttpClient Http
 @inject NavigationManager Nav
 
 <PageTitle>My Profile | Rate My Production</PageTitle>
@@ -46,7 +47,7 @@
                             <option>Logistics & Transport</option>
                         </select>
 
-                        <button class="btn btn-outline-danger btn-sm w-100">
+                        <button class="btn btn-outline-danger btn-sm w-100" @onclick="Logout">
                             <i class="bi bi-box-arrow-right"></i> Log Out
                         </button>
                     </div>
@@ -62,6 +63,10 @@
 
             <div class="card border-0 shadow-sm">
                 <div class="list-group list-group-flush">
+                    @if (userReviews.Count == 0)
+                    {
+                        <div class="p-4 text-center text-muted">No reviews found.</div>
+                    }
                     @foreach (var myReview in userReviews)
                     {
                         <div class="list-group-item p-4">
@@ -92,19 +97,54 @@
 
 @code {
     private string currentUsername = "Loading...";
+    private List<UserReview> userReviews = new();
 
     protected override async Task OnInitializedAsync()
     {
         var savedUsername = await Storage.GetItemAsync<string>("username");
         currentUsername = !string.IsNullOrEmpty(savedUsername) ? savedUsername : "Anonymous Crew";
+
+        await LoadData();
     }
 
-    private List<UserReview> userReviews = new()
+    private async Task LoadData()
     {
-        new() { Production = "The Bear", Rating = 5, Date = "Dec 2025", Snippet = "Great crew, catering was the best I've ever had on an FX show." },
-        new() { Production = "Untitled Hero Movie", Rating = 2, Date = "Oct 2025", Snippet = "Turnaround violations were constant. Proceed with caution." },
-        new() { Production = "House of the Dragon", Rating = 4, Date = "Aug 2025", Snippet = "Strong HODs, very professional environment." }
-    };
+        try
+        {
+            var results = await Http.GetFromJsonAsync<List<ReviewApiResponse>>("api/reviews/my-reviews");
+
+            if (results != null)
+            {
+                userReviews = results.Select(r => new UserReview
+                {
+                    Production = r.ProductionTitle,
+                    Rating = r.RatingOverall,
+                    Date = r.DatePosted.ToString("MMM yyyy"),
+                    Snippet = r.ReviewText
+                }).ToList();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error fetching reviews: {ex.Message}");
+        }
+    }
+
+    private async Task Logout()
+    {
+        await Storage.RemoveItemAsync("accessToken");
+        await Storage.RemoveItemAsync("refreshToken");
+        await Storage.RemoveItemAsync("username");
+        Nav.NavigateTo("/login", true);
+    }
+
+    public class ReviewApiResponse
+    {
+        public string ProductionTitle { get; set; } = "";
+        public int RatingOverall { get; set; }
+        public string ReviewText { get; set; } = "";
+        public DateTime DatePosted { get; set; }
+    }
 
     public class UserReview
     {

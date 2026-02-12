@@ -1,4 +1,5 @@
 ﻿@page "/production/{Slug}"
+@using System.Text.Json.Serialization
 @inject HttpClient Http
 @inject NavigationManager Nav
 
@@ -18,7 +19,7 @@
             <i class="bi bi-arrow-left"></i> Back to Search
         </button>
 
-        <div class="card shadow border-0 mb-4 overflow-hidden">
+        <div class="card shadow border-0 mb-5 overflow-hidden">
             <div class="card-header bg-dark text-white p-4">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
@@ -26,7 +27,7 @@
                         <span class="badge bg-primary mt-2">@production.Studio</span>
                     </div>
                     <div class="text-center bg-white text-dark rounded p-2 shadow-sm">
-                        <div class="h2 mb-0 text-warning">⭐ @production.AverageRating.ToString("0.0")</div>
+                        <div class="h2 mb-0 text-warning">⭐ @(production.AverageRating?.ToString("0.0") ?? "0.0")</div>
                         <small class="text-uppercase fw-bold" style="font-size: 0.6rem;">Overall Score</small>
                     </div>
                 </div>
@@ -34,57 +35,68 @@
             <div class="card-body bg-light border-bottom">
                 <div class="row text-center">
                     <div class="col border-end">
-                        <small class="text-muted d-block text-uppercase small">Safety</small>
-                        <span class="fw-bold">4.8/5</span>
-                    </div>
-                    <div class="col border-end">
-                        <small class="text-muted d-block text-uppercase small">Catering</small>
-                        <span class="fw-bold">3.5/5</span>
-                    </div>
-                    <div class="col">
                         <small class="text-muted d-block text-uppercase small">Reviews</small>
                         <span class="fw-bold">@production.ReviewCount</span>
+                    </div>
+                    <div class="col border-end">
+                        <small class="text-muted d-block text-uppercase small">Status</small>
+                        <span class="badge bg-success">Verified</span>
+                    </div>
+                    <div class="col">
+                        <small class="text-muted d-block text-uppercase small">Safety</small>
+                        <span class="fw-bold">N/A</span>
                     </div>
                 </div>
             </div>
         </div>
 
         <div class="mt-5">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h3 class="fw-bold mb-0">Crew Reviews</h3>
-                <AuthorizeView>
-                    <Authorized>
-                        <button class="btn btn-outline-primary btn-sm">
-                            <i class="bi bi-pencil-square"></i> Write Review
-                        </button>
-                    </Authorized>
-                </AuthorizeView>
-            </div>
+            <h3 class="fw-bold mb-4">Crew Reviews</h3>
 
             <AuthorizeView>
                 <Authorized>
-                    <div class="list-group shadow-sm">
-                        <div class="list-group-item p-4">
-                            <div class="d-flex justify-content-between mb-2">
-                                <span class="badge bg-info text-dark">Camera Dept</span>
-                                <small class="text-muted">Oct 2025</small>
-                            </div>
-                            <p class="mb-0 italic">"Great crew, but the location move was a nightmare. Production didn't provide enough shuttles."</p>
+                    @if (reviews == null || !reviews.Any())
+                    {
+                        <div class="p-5 text-center bg-white shadow-sm rounded border">
+                            <i class="bi bi-chat-left-dots text-muted" style="font-size: 2rem;"></i>
+                            <p class="mt-3 text-muted mb-0">No reviews found for this production yet.</p>
                         </div>
-                    </div>
+                    }
+                    else
+                    {
+                        @foreach (var review in reviews)
+                        {
+                            <div class="bg-white p-4 mb-4 shadow-sm rounded border-0">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <div>
+                                        <span class="badge bg-info text-dark me-2">@review.RoleWorked</span>
+                                        <span class="text-warning">
+                                            @for (int i = 0; i < review.RatingOverall; i++)
+                                            {
+                                                <span>⭐</span>
+                                            }
+                                        </span>
+                                    </div>
+                                    <small class="text-muted">@review.DatePosted.ToString("MMM dd, yyyy")</small>
+                                </div>
+                                <p class="mb-2 lead" style="font-size: 1.1rem; font-style: italic;">
+                                    "@review.ReviewText"
+                                </p>
+                                <div class="text-muted small pt-2 border-top">
+                                    — @(review.IsAnonymous ? "Anonymous Crew Member" : review.DisplayName)
+                                </div>
+                            </div>
+                        }
+                    }
                 </Authorized>
                 <NotAuthorized>
-                    <div class="card border-0 shadow-sm p-5 text-center bg-white">
-                        <div class="mb-3">
-                            <i class="bi bi-shield-lock text-primary" style="font-size: 3.5rem;"></i>
-                        </div>
-                        <h4 class="fw-bold">Member-Only Access</h4>
-                        <p class="text-muted mx-auto mb-4" style="max-width: 450px;">
-                            Detailed crew feedback, department-specific ratings, and "Red Flags" are only visible to verified industry professionals.
-                        </p>
-                        <div class="d-grid gap-2 d-md-block">
-                            <a href="login" class="btn btn-primary px-5 py-2 me-md-2">Login</a>
-                            <a href="register" class="btn btn-outline-dark px-5 py-2">Create Account</a>
+                    <div class="p-5 text-center bg-light rounded border border-dashed shadow-sm">
+                        <i class="bi bi-lock-fill text-secondary mb-3" style="font-size: 3rem;"></i>
+                        <h4 class="fw-bold">Review Details are Protected</h4>
+                        <p class="text-muted mb-4">Detailed feedback and "set intel" are only visible to logged-in crew members.</p>
+                        <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
+                            <a href="/login" class="btn btn-primary btn-lg px-4 gap-3">Log In</a>
+                            <a href="/register" class="btn btn-outline-secondary btn-lg px-4">Create Account</a>
                         </div>
                     </div>
                 </NotAuthorized>
@@ -96,41 +108,79 @@
 @code {
     [Parameter] public string Slug { get; set; } = "";
     private ProductionDetailDto? production;
+    private List<ReviewDto> reviews = new();
 
     protected override async Task OnInitializedAsync()
     {
-        await Task.Delay(600);
-
-        // TODO: remove and get actual data
-        var mockProductions = new List<ProductionDetailDto>
+        try
         {
-            new() { Name = "House of the Dragon", Studio = "HBO", AverageRating = 4.2, ReviewCount = 156 },
-            new() { Name = "The Bear", Studio = "FX", AverageRating = 4.8, ReviewCount = 89 },
-            new() { Name = "How I met your mother", Studio = "CBS", AverageRating = 3.8, ReviewCount = 12 }
-        };
+            var allProductions = await Http.GetFromJsonAsync<List<ProductionDetailDto>>("api/productions");
 
-        // TODO: replace with api call
-        production = mockProductions.FirstOrDefault(p => GenerateSlug(p.Name) == Slug.ToLower());
+            if (allProductions != null)
+            {
+                production = allProductions.FirstOrDefault(p =>
+                    GenerateSlug(p.Name).Equals(Slug, StringComparison.OrdinalIgnoreCase));
 
-        if (production == null)
+                if (production != null)
+                {
+                    var reviewsUrl = $"api/reviews/production/{production.Id}";
+
+                    try
+                    {
+                        var result = await Http.GetFromJsonAsync<PagedResponse<ReviewDto>>(reviewsUrl);
+                        if (result != null && result.Items != null)
+                        {
+                            reviews = result.Items
+                                .OrderByDescending(r => r.DatePosted)
+                                .ToList();
+                        }
+                    }
+                    catch (HttpRequestException)
+                    {
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
         {
-            Nav.NavigateTo("/not-found");
+            Console.WriteLine($"Error loading details: {ex.Message}");
         }
     }
 
-    private string GenerateSlug(string phrase) 
+    private string GenerateSlug(string phrase)
     {
+        if (string.IsNullOrEmpty(phrase)) return "";
         return phrase.ToLower()
                      .Replace(" ", "-")
                      .Replace("'", "")
+                     .Replace(":", "")
                      .Trim();
     }
 
-    public class ProductionDetailDto 
+    public class PagedResponse<T>
     {
-        public string Name { get; set; } = "";
-        public string Studio { get; set; } = "";
-        public double AverageRating { get; set; }
-        public int ReviewCount { get; set; }
+        [JsonPropertyName("items")] public List<T> Items { get; set; } = new();
+        [JsonPropertyName("totalCount")] public int TotalCount { get; set; }
+    }
+
+    public class ProductionDetailDto
+    {
+        [JsonPropertyName("productionID")] public int Id { get; set; }
+        [JsonPropertyName("title")] public string Name { get; set; } = "";
+        [JsonPropertyName("studio")] public string? Studio { get; set; }
+        [JsonPropertyName("averageRating")] public decimal? AverageRating { get; set; }
+        [JsonPropertyName("reviewCount")] public int ReviewCount { get; set; }
+    }
+
+    public class ReviewDto
+    {
+        [JsonPropertyName("reviewID")] public int ReviewID { get; set; }
+        [JsonPropertyName("productionID")] public int ProductionID { get; set; }
+        [JsonPropertyName("ratingOverall")] public byte RatingOverall { get; set; }
+        [JsonPropertyName("roleWorked")] public string? RoleWorked { get; set; }
+        [JsonPropertyName("reviewText")] public string ReviewText { get; set; } = "";
+        [JsonPropertyName("displayName")] public string DisplayName { get; set; } = "";
+        [JsonPropertyName("datePosted")] public DateTime DatePosted { get; set; }
+        [JsonPropertyName("isAnonymous")] public bool IsAnonymous { get; set; }
     }
 }

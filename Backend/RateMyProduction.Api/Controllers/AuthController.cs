@@ -51,7 +51,28 @@ public class AuthController : ControllerBase
 
         if (result.Succeeded)
         {
-            return Ok(new { Message = "User registered successfully" });
+            var accessToken = GenerateJwtToken(user);
+            var refreshToken = GenerateRefreshTokenPlain();
+            var hashedRefreshToken = HashRefreshToken(refreshToken);
+
+            var refreshTokenEntity = new RefreshToken
+            {
+                UserID = user.Id,
+                TokenHash = hashedRefreshToken,
+                ExpiresAt = DateTime.UtcNow.AddDays(30),
+                CreatedAt = DateTime.UtcNow,
+                IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString(),
+                DeviceInfo = HttpContext.Request.Headers["User-Agent"].ToString()
+            };
+
+            await _refreshTokenService.SaveRefreshTokenAsync(refreshTokenEntity);
+
+            return Ok(new
+            {
+                AccessToken = accessToken,
+                RefreshToken = refreshToken,
+                Username = user.UserName
+            });
         }
 
         return BadRequest(result.Errors);

@@ -1,5 +1,4 @@
-﻿// Api/Controllers/ReviewsController.cs
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RateMyProduction.Core.DTOs.Requests;
 using RateMyProduction.Core.DTOs.Responses;
@@ -21,6 +20,14 @@ public class ReviewsController : ControllerBase
 
     private int CurrentUserId => int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value
         ?? throw new UnauthorizedAccessException("User not authenticated"));
+
+    [Authorize]
+    [HttpGet("my-reviews")]
+    public async Task<ActionResult<IEnumerable<ReviewDto>>> GetMyReviews()
+    {
+        var reviews = await _reviewService.GetReviewsByUserIdAsync(CurrentUserId);
+        return Ok(reviews);
+    }
 
     [HttpPost("production/{productionId}")]
     public async Task<ActionResult<ReviewDto>> CreateReview(int productionId, CreateReviewRequest request)

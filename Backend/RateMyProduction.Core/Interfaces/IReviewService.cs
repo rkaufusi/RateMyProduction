@@ -15,6 +15,7 @@ namespace RateMyProduction.Core.Interfaces
         Task<PagedResult<ReviewDto>> GetReviewsForProductionAsync(int productionId, ReviewQueryParameters parameters);
         Task<bool> UserHasReviewedAsync(int userId, int productionId);
         Task<ReviewDto?> GetByIdAsync(int reviewId, int? currentUserId = null);
+        Task<IEnumerable<ReviewDto>> GetReviewsByUserIdAsync(int userId);
     }
 
 }

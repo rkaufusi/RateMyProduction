@@ -21,6 +21,32 @@ namespace RateMyProduction.Core.Services
             _userRepo = userRepo;
         }
 
+
+        public async Task<IEnumerable<ReviewDto>> GetReviewsByUserIdAsync(int userId)
+        {
+            var userReviews = await _reviewRepo.FindAllAsync(r => r.UserID == userId);
+
+            if (!userReviews.Any())
+                return Enumerable.Empty<ReviewDto>();
+
+            var prodIdsNeeded = userReviews.Select(r => r.ProductionID).Distinct().ToList();
+            var allProductions = await _prodRepo.ListAllAsync();
+            var prodMap = allProductions
+                .Where(p => prodIdsNeeded.Contains(p.ProductionID))
+                .ToDictionary(p => p.ProductionID);
+
+            var user = await _userRepo.GetByIdAsync(userId);
+
+            return userReviews
+                .OrderByDescending(r => r.DatePosted)
+                .Select(r => ToDto(
+                    review: r,
+                    production: prodMap.GetValueOrDefault(r.ProductionID) ?? new Production { Title = "Unknown" },
+                    user: user,
+                    currentUserId: userId
+                ));
+        }
+
         public async Task<ReviewDto> CreateReviewAsync(int userId, int productionId, CreateReviewRequest request)
         {
             if (await UserHasReviewedAsync(userId, productionId))
@@ -89,11 +115,9 @@ namespace RateMyProduction.Core.Services
             int productionId,
             ReviewQueryParameters parameters)
         {
-            // 1. Make sure the production actually exists
             var production = await _prodRepo.GetByIdAsync(productionId)
                 ?? throw new KeyNotFoundException($"Production {productionId} not found");
 
-            // 2. Load ALL reviews for this production (your repo only has ListAllAsync + AnyAsync)
             var allReviewsForThisProduction = (await _reviewRepo.ListAllAsync())
                 .Where(r => r.ProductionID == productionId)
                 .OrderByDescending(r => r.DatePosted)
@@ -101,20 +125,17 @@ namespace RateMyProduction.Core.Services
 
             var totalCount = allReviewsForThisProduction.Count;
 
-            // 3. Apply paging
             var pageReviews = allReviewsForThisProduction
                 .Skip((parameters.Page - 1) * parameters.PageSize)
                 .Take(parameters.PageSize)
                 .ToList();
 
-            // 4. Load only the users we actually need (bulk lookup)
-            var userIdsNeeded = pageReviews.Select(r => r.UserID).Distinct().Distinct().ToList();
+            var userIdsNeeded = pageReviews.Select(r => r.UserID).Distinct().ToList();
             var allUsers = await _userRepo.ListAllAsync();
             var userMap = allUsers
                 .Where(u => userIdsNeeded.Contains(u.Id))
                 .ToDictionary(u => u.Id);
 
-            // 5. Map to DTOs — now matches the updated ToDto signature
             var dtos = pageReviews.Select(r => ToDto(
                 review: r,
                 production: production,
@@ -122,7 +143,6 @@ namespace RateMyProduction.Core.Services
                 currentUserId: parameters.CurrentUserId ?? 0
             )).ToList();
 
-            // 6. Return paged result
             return new PagedResult<ReviewDto>(dtos, parameters.Page, parameters.PageSize)
             {
                 TotalCount = totalCount

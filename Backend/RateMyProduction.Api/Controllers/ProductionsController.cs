@@ -1,12 +1,14 @@
 ﻿// Api/Controllers/ProductionsController.cs
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using RateMyProduction.Core.Interfaces;
 using RateMyProduction.Core.DTOs.Responses;
+using RateMyProduction.Core.Interfaces;
 
 namespace RateMyProduction.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[AllowAnonymous]
 public class ProductionsController : ControllerBase
 {
     private readonly IProductionService _productionService;
@@ -16,12 +18,10 @@ public class ProductionsController : ControllerBase
         _productionService = productionService;
     }
 
-    // GET: api/productions
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<ProductionDTOs>>> GetAll()
         => Ok(await _productionService.GetAllAsync());
 
-    // GET: api/productions/5
     [HttpGet("{id}")]
     public async Task<ActionResult<ProductionDTOs>> GetById(int id)
     {
@@ -29,12 +29,10 @@ public class ProductionsController : ControllerBase
         return production is null ? NotFound() : Ok(production);
     }
 
-    // GET: api/productions/top
     [HttpGet("top")]
     public async Task<ActionResult<IReadOnlyList<ProductionDTOs>>> GetTopRated([FromQuery] int count = 10)
         => Ok(await _productionService.GetTopRatedAsync(count));
 
-    // GET: api/productions/paged
     [HttpGet("paged")]
     public async Task<ActionResult<PagedResult<ProductionDTOs>>> GetPaged(
         [FromQuery] int page = 1,

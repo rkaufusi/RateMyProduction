@@ -1,11 +1,19 @@
 ﻿<div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
-        <a class="navbar-brand" href="">Rate My Production</a>
+        <a class="navbar-brand d-flex align-items-center" href="">
+            <span class="brand-blue">RATE MY</span>
+            <span class="brand-white">PRODUCTION</span>
+        </a>
         <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
             <span class="navbar-toggler-icon"></span>
         </button>
     </div>
 </div>
+@* The Backdrop: This dims the screen and allows "click-away" to close *@
+@if (!collapseNavMenu)
+{
+    <div class="nav-backdrop" @onclick="ToggleNavMenu"></div>
+}
 
 <div class="@NavMenuCssClass nav-scrollable" @onclick="ToggleNavMenu">
     <nav class="nav flex-column">
